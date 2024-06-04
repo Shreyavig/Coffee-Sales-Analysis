@@ -1,0 +1,77 @@
+ # Coffee Shop Sales Analysis Dashboard 
+
+
+This dashboard helps the coffee shop understand their customers better. The data consists of transaction_id,transaction_date,transaction_time,transaction_qty,store_id,store_location,product_id,unit_price,
+product_category,product_type,product_detail,which gives information about the number of people visiting the shop, the products they are buying,quantity of the products,cost of the product,
+category of the product etc.
+
+I have conducted a comprehensive sale analysis for this coffee shop,focusing on key performance indicators(KPI'S) such as total sales,total orders and total quantites sold.This project leverages advanced 
+visualizations to provide deep insights and drive strategic decisions.
+Charts in power bi are created representing sales analysis by weekdays and weekends for each month,sales analysis by store location and calender heat map is created that dynamically adjusts based on 
+specific month from a slicer.
+
+### Steps followed 
+
+- Step 1 : First converted the xlsx file into csv file and cleaned the data by importing into My SQL.
+- Step 2 : Load the cleaned data into Power Bi for visualizations.
+- Step 3 : Check for null values ,errors in Power Query Editor.
+- Step 4 : It was observed that in none of the columns errors & empty values were present.
+- Step 5 : Changed the data type of transaction_time to time.
+- Step 6 : A date table was created  using Calendar function:Date Table = 
+CALENDAR(min(Transactions[transaction_date]),max(Transactions[transaction_date])).Dates between minimum and maximum dates will be shown.(01/01/2023 and 30/06/2023)
+- Step 7 : Using new column , we will create a new column named:
+ (i)MONTH = FORMAT('Date Table'[Date],"mmm") which will give us the month of the particular date.
+ (ii) Month Number will be extracted using :
+ Month Number = MONTH('Date Table'[Date])
+ (iii)Month Year will be extracted using :
+ Month Year = Format('Date Table'[Date],"mmm yyyy")
+ (iv)Day Name will be calculated using:
+ Day Name = FORMAT('Date Table'[Date],"ddd")
+- Step 8 :In model view, a relationship will be created between date and transcation table using date. 1 to many relationship will be created.
+- Step 9 : Now,dashboard setup will be done by selecting the background.
+- Step 10 :Sales will be caluclated using new column  and using :
+Sales = Transactions[unit_price]* Transactions[transaction_qty].
+-Step 11-For Total sales, a new measure is created using:
+Total Sales = SUM(Transactions[Sales])
+-Step 12 -A new card visual will be selected and sales will be taken for this KPI.
+For each respective month, to calculate sales, we will take a new slicer and add month year in that and convert it into single select and order in descending 
+- Step 13- To create sparkline , line chart is used. Date hierarchy is created using date column and date hierarchy and total sales are used to create the sparkline.
+- Step 14-MoM increase /decrease is calculated using DAX . 
+First Current Month Sales is calculated using:
+Current Month Sales = VAR selected_month = SELECTEDVALUE('Date Table'[MONTH])                        
+return
+TOTALMTD(CALCULATE([Total Sales],'Date Table'[MONTH]=selected_month),'Date Table'[Date]).
+Then Previous Month Sales is calculated using:
+Previous Month Sales = CALCULATE([Current Month Sales],DATEADD('Date Table'[Date],-1,MONTH))
+It is observed that for January ,the previous month sales will not be shown as there is no previous month before January.
+- Step 15 - MoM  growth and diff sales will be calculated using:
+MOM Growth & Difference of Sales = 
+ var month_diff=[Current Month Sales]-[Previous Month Sales]
+ var mom =([Current Month Sales]-[Previous Month Sales])/[Previous Month Sales]
+var _sign= if(month_diff > 0,"+","")
+ var _signtrend= if(month_diff > 0,"▲","▼")
+     return
+       if(ISBLANK([Previous Month Sales] ),"No sales in previous month",  _sign & FORMAT(mom,"#0.0%" & " | " & _sign & FORMAT(month_diff/1000,"0.0K")) & " " & "vs LM").
+       To show this on sparkline , we will format the title and select the field as MoM growth and difference of sales.
+-Step 16- Total Orders are calculated.Current Month Orders and Previous Month Orders are calculated using DAX as before and then MoM growth and diff for orders is calculated.
+- Step 17- Same step is repeated for Total Quantity Analysis.
+- Step 18 - For Calendar Map ,new column is created named Day Name :
+Day Name = FORMAT('Date Table'[Date],"ddd") .
+Also 
+Week Number = WEEKNUM('Date Table'[Date],2) is calculated  #Where 1 represents week for Sunday. For Monday, it will be week 2.
+Using matrix chart, in rows week numbers will be taken and in columns day name will be taken and day numbers will be added in values. 
+Week Day Numbers will be calculated using :
+Weekday Number = WEEKDAY('Date Table'[Date],2) to make the calender in order.
+- Step 19- Tool Tip is added by taking a new page and we will take Total Sales, Orders and Quantites and then donut chart will be taken  and in values Total Sales, Orders and Quantites will be taken. Another card visual  will be taken and date will be taken in that.Along with that ,MoM growth and diff sales will be taken. 
+To connect with report page,Tool Tips will be turned on for the calendar map and tool tip page will be selected. Now when we will hover our mouse over dates in calendar chart we will see the details .
+- Step 20- A Donut Chart will be created to represent sales acc to weekend and weekdays. First we will create a new column:
+Weekday/Weekend = if('Date Table'[Day Name]="Sat" ||'Date Table'[Day Name]="Sun" , "Weekend","Weekday")
+- Step 21 - Visualization of sales analysis by store location was observed in which clustered bar chart was taken.
+- Step 22-Transaction date and  Total Sales were taken and visualized using stacked column chart.   Average line was plotted on the graph using new measure:
+Daily Avg Sales = AVERAGEX(ALLSELECTED(Transactions[transaction_date]),[Total Sales])
+Bars Colors were customised using :
+Colour For Bars = if([Total Sales]>[Daily Avg Sales],"Above Average", "Below Average") depending upon daily avergae sales.
+- Step 23- Sales Analysis by product category was visualised using clustered bar chart.It was also customised acc to business requirements.
+-Step 24-Top 10 products were displayed using sales volume.
+- Step 25-Heat Map was used to visualize sales patterns by days and hours. Tool tip was implemented  to display detailed metrics(Sales,Orders and Quantities) when hovering over specific day hour.
+In the end filtering options will be enabled to filter the data acc to requirements.
